@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PXPay Token 自動測試頁面</title>
+    <title>PXPay Payload 自動測試頁面</title>
     <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
@@ -33,11 +33,11 @@
                 document.getElementById('status').innerText = '✅ WebViewJavascriptBridge 已初始化';
 
                 try {
-                    bridge.callHandler('getpayload', null, function(response) {
-                        if (response && response.token) {
-                            document.getElementById('result').innerText = '✅ PXPay Token: ' + response.token;
+                    bridge.callHandler('getPayload', null, function(response) {
+                        if (response && typeof response === 'string') {
+                            document.getElementById('result').innerText = '✅ Payload: ' + response;
                         } else {
-                            document.getElementById('result').innerText = '⚠️ 已呼叫 getpayload，但未收到 token。';
+                            document.getElementById('result').innerText = '⚠️ 已呼叫 getPayload，但回傳格式不正確。';
                             document.getElementById('error').innerText = '回傳內容：' + JSON.stringify(response);
                         }
                     });
@@ -50,11 +50,11 @@
     </script>
 </head>
 <body>
-    <h1>PXPay Token 自動測試（除錯版）</h1>
+    <h1>PXPay Payload 自動測試（依據規格文件）</h1>
     <p id="status">⏳ 初始化中...</p>
     <p id="result"></p>
     <p id="error"></p>
-    <h3>📋 除錯資訊（請複製以下內容回報）</h3>
+    <h3> 除錯資訊（請複製以下內容回報）</h3>
     <pre id="debugOutput"></pre>
 </body>
 </html>
