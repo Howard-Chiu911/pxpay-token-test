@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PXPay Token 測試頁面</title>
+    <meta charset="UTF-8">
+    <script type="text/javascript">
+        function setupWebViewJavascriptBridge(callback) {
+            if (window.WebViewJavascriptBridge) {
+                return callback(WebViewJavascriptBridge);
+            }
+            document.addEventListener(
+                'WebViewJavascriptBridgeReady',
+                function() {
+                    callback(WebViewJavascriptBridge);
+                },
+                false
+            );
+        }
+
+        setupWebViewJavascriptBridge(function(bridge) {
+            document.getElementById('getTokenBtn').addEventListener('click', function() {
+                bridge.callHandler('getpayload', null, function(response) {
+                    console.log('取得的 PXPay Token:', response.token);
+                    document.getElementById('result').innerText = 'PXPay Token: ' + response.token;
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>PXPay Token 測試</h1>
+    <button id="getTokenBtn">取得 PXPay Token</button>
+    <p id="result">尚未取得 Token</p>
+</body>
+</html>
