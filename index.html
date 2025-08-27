@@ -1,60 +1,80 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>PXPay Payload 自動測試頁面</title>
     <meta charset="UTF-8">
+    <title>PX Pay Payload Viewer</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        #result, #error, #status { margin-top: 20px; }
-        #result { color: green; }
-        #error { color: red; }
-        #status { color: blue; }
-        pre { background: #f4f4f4; padding: 10px; border: 1px solid #ccc; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h2 {
+            color: #333;
+        }
+        #payload {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eee;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        #error {
+            color: red;
+            margin-top: 10px;
+        }
     </style>
-    <script type="text/javascript">
+</head>
+<body>
+    <h2>PX Pay Payload</h2>
+    <div id="payload">載入中...</div>
+    <div id="error"></div>
+
+    <script>
         function setupWebViewJavascriptBridge(callback) {
             if (window.WebViewJavascriptBridge) {
                 return callback(WebViewJavascriptBridge);
             }
-            document.addEventListener(
-                'WebViewJavascriptBridgeReady',
-                function() {
-                    callback(WebViewJavascriptBridge);
-                },
-                false
-            );
+            if (window.WVJBCallbacks) {
+                return window.WVJBCallbacks.push(callback);
+            }
+            window.WVJBCallbacks = [callback];
+            var WVJBIframe = document.createElement('iframe');
+            WVJBIframe.style.display = 'none';
+            WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+            document.documentElement.appendChild(WVJ(function () {
+                document.documentElement.removeChild(WVJBIframe);
+            }, 0);
         }
 
-        window.onload = function() {
-            document.getElementById('status').innerText = '⏳ 等待 WebViewJavascriptBridge 初始化...';
+        setupWebViewJavascriptBridge(function (bridge) {
+            let isResponded = false;
+            const timeoutMs = 5000; // 5 秒 timeout
 
-            setupWebViewJavascriptBridge(function(bridge) {
-                document.getElementById('status').innerText = '✅ WebViewJavascriptBridge 已初始化';
-
-                try {
-                    bridge.callHandler('getPayload', null, function(response) {
-                        if (response && typeof response === 'string') {
-                            document.getElementById('result').innerText = '✅ Payload: ' + response;
-                        } else {
-                            document.getElementById('result').innerText = '⚠️ 已呼叫 getPayload，但回傳格式不正確。';
-                            document.getElementById('error').innerText = '回傳內容：' + JSON.stringify(response);
-                        }
-                    });
-                } catch (e) {
-                    document.getElementById('result').innerText = '❌ 呼叫失敗';
-                    document.getElementById('error').innerText = '錯誤訊息: ' + e.message;
+            // 設定 timeout 機制
+            const timeout = setTimeout(() => {
+                if (!isResponded) {
+                    document.getElementById("payload").textContent = "";
+                    document.getElementById("error").textContent = "取得 payload 逾時，請稍後再試。";
                 }
+            }, timeoutMs);
+
+            // 呼叫 Swift 的 getPayload function
+            bridge.callHandler('getPayload', null, function (response) {
+                isResponded = true;
+                clearTimeout(timeout);
+
+                if (!response || typeof response !== 'object') {
+                    document.getElementById("payload").textContent = "";
+                    document.getElementById("error").textContent = "取得 payload 失敗，資料格式錯誤。";
+                    return;
+                }
+
+                document.getElementById("error").textContent = "";
+                document.getElementById("payload").textContent = JSON.stringify(response, null, 2);
             });
-        }
+        });
     </script>
-</head>
-<body>
-    <h1>PXPay Payload 自動測試（依據規格文件）</h1>
-    <p id="status">⏳ 初始化中...</p>
-    <p id="result"></p>
-    <p id="error"></p>
-    <h3> 除錯資訊（請複製以下內容回報）</h3>
-    <pre id="debugOutput"></pre>
 </body>
 </html>
