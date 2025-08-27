@@ -1,25 +1,57 @@
-function setupWKWebViewJavascriptBridge(callback) {
-  if (window.WKWebViewJavascriptBridge) {
-    return callback(window.WKWebViewJavascriptBridge);
-  }
-  if (window.WKWVJBCallbacks) {
-    return window.WKWVJBCallbacks.push(callback);
-  }
-  window.WKWVJBCallbacks = [callback];
-  window.webkit?.messageHandlers?.iOS_Native_InjectJavascript?.postMessage(null);
-}
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>PX Pay Native Bridge 測試</title>
+  <script type="module">
+    import callNativeFunction from './nativeBridge.js'; // 假設你將那段 function 存成 nativeBridge.js
 
-setupWKWebViewJavascriptBridge(function (bridge) {
-  // 呼叫 getPayload
-  bridge.callHandler('getPayload', {}, function (response) {
-    console.log('原生回傳的 payload:', response);
-    document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
-  });
+    window.onload = () => {
+      document.getElementById('btn-get-payload').addEventListener('click', async () => {
+        try {
+          const result = await callNativeFunction('getPayload');
+          console.log('取得的 Payload:', result);
+          document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+        } catch (err) {
+          console.error('取得 Payload 失敗:', err);
+        }
+      });
 
-  // 呼叫 closeWebView
-  document.getElementById('closeWebViewBtn').addEventListener('click', function () {
-    bridge.callHandler('closeWebView', {}, function () {
-      console.log('WebView 已關閉');
-    });
-  });
-});
+      document.getElementById('btn-close-webview').addEventListener('click', async () => {
+        try {
+          const result = await callNativeFunction('closeWebView');
+          console.log('關閉 WebView:', result);
+          document.getElementById('result').textContent = result;
+        } catch (err) {
+          console.error('關閉 WebView 失敗:', err);
+        }
+      });
+    };
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      margin: 10px 0;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>PX Pay Native Bridge 測試</h1>
+  <button id="btn-get-payload">取得 Payload</button>
+  <button id="btn-close-webview">關閉 WebView</button>
+
+  <h2>結果：</h2>
+  <pre id="result">尚未執行操作</pre>
+</body>
+</html>
