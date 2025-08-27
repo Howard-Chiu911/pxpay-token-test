@@ -1,93 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <title>PX Pay Payload Viewer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f9f9f9;
+  <meta charset="UTF-8">
+  <title>WKWebViewJavascriptBridge 測試</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { margin: 10px 0; padding: 10px 20px; font-size: 16px; }
+    #payloadResult, #errorMessage {
+      background: #f0f0f0;
+      padding: 10px;
+      white-space: pre-wrap;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    #errorMessage { color: red; }
+  </style>
+  <script>
+    function setupWebViewJavascriptBridge(callback) {
+      if (window.WebViewJavascriptBridge) {
+        return callback(WebViewJavascriptBridge);
+      }
+      if (window.WVJBCallbacks) {
+        return window.WVJBCallbacks.push(callback);
+      }
+      window.WVJBCallbacks = [callback];
+      var WVJBIframe = document.createElement('iframe');
+      WVJBIframe.style.display = 'none';
+      WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
+      document.documentElement.appendChild(WVJBIframe);
+      setTimeout(function () {
+        document.documentElement.removeChild(WVJBIframe);
+      }, 0);
+    }
+
+    setupWebViewJavascriptBridge(function (bridge) {
+      document.getElementById('getPayloadBtn').addEventListener('click', function () {
+        document.getElementById('payloadResult').innerText = '';
+        document.getElementById('errorMessage').innerText = '';
+        bridge.callHandler('getPayload', {}, function (response) {
+            if (response && typeof response === 'object') {
+              document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
+            } else {
+              throw new Error('回傳格式錯誤');
+            }
+          });
+        } catch (err) {
+          document.getElementById('errorMessage').innerText = '取得 Payload 失敗：' + err.message;
         }
-        h2 {
-            color: #333;
-        }
-        #payload {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #eee;
-            border-radius: 8px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        #error {
-            color: red;
-            margin-top: 10px;
-        }
-        #closeBtn {
-            margin-top: 30px;
-            padding: 10px 20px;
-            background-color: #007aff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
+      });
+
+      document.getElementById('closeWebViewBtn').addEventListener('click', function () {
+        bridge.callHandler('closeWebView', {}, function () {
+          console.log('WebView 已關閉');
+        });
+      });
+    });
+  </script>
 </head>
 <body>
-    <h2>PX Pay Payload</h2>
-    <div id="payload">載入中...</div>
-    <div id="error"></div>
-    <button id="closeBtn">關閉網頁</button>
-
-    <script>
-        function setupWebViewJavascriptBridge(callback) {
-            if (window.WebViewJavascriptBridge) {
-                return callback(WebViewJavascriptBridge);
-            }
-            if (window.WVJBCallbacks) {
-                return window.WVJBCallbacks.push(callback);
-            }
-            window.WVJBCallbacks = [callback];
-            var WVJBIframe = document.createElement('iframe');
-            WVJBIframe.style.display = 'none';
-            WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
-            document.documentElement.appendChild(WVJBIframe);
-            setTimeout(function () {
-                document.documentElement.removeChild(WVJBIframe);
-            }, 0);
-        }
-
-        setupWebViewJavascriptBridge(function (bridge) {
-            let isResponded = false;
-            const timeoutMs = 5000;
-
-            const timeout = setTimeout(() => {
-                if (!isResponded) {
-                    document.getElementById("payload").textContent = "";
-                    document.getElementById("error").textContent = "取得 payload 逾時，請稍後再試。";
-                }
-            }, timeoutMs);
-
-            bridge.callHandler('getPayload', null, function (response) {
-                isResponded = true;
-                               if (!response || typeof response !== 'object') {
-                    document.getElementById("payload").textContent = "";
-                    document.getElementById("error").textContent = "取得 payload 失敗，資料格式錯誤。";
-                    return;
-                }
-
-                document.getElementById("error").textContent = "";
-                document.getElementById("payload").textContent = JSON.stringify(response, null, 2);
-            });
-
-            // 關閉按鈕事件
-            document.getElementById("closeBtn").addEventListener("click", function () {
-                bridge.callHandler('closeWebView');
-            });
-        });
-    </script>
+  <h1>WKWebViewJavascriptBridge 測試頁面</h1>
+  <button id="getPayloadBtn">取得 Payload</button>
+  <div id="payloadResult"></div>
+  <div id="errorMessage"></div>
+  <button id="closeWebViewBtn">關閉 WebView</button>
 </body>
 </html>
