@@ -2,12 +2,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PXPay Token 測試頁面</title>
+    <title>PXPay Token 自動測試頁面</title>
     <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
-        #result { margin-top: 20px; color: green; }
-        #error { margin-top: 10px; color: red; }
+        #result, #error, #status { margin-top: 20px; }
+        #result { color: green; }
+        #error { color: red; }
+        #status { color: blue; }
+        pre { background: #f4f4f4; padding: 10px; border: 1px solid #ccc; }
     </style>
     <script type="text/javascript">
         function setupWebViewJavascriptBridge(callback) {
@@ -23,32 +26,35 @@
             );
         }
 
-        setupWebViewJavascriptBridge(function(bridge) {
-            document.getElementById('getTokenBtn').addEventListener('click', function() {
-                document.getElementById('result').innerText = '正在呼叫 getpayload...';
-                document.getElementById('error').innerText = '';
+        window.onload = function() {
+            document.getElementById('status').innerText = '⏳ 等待 WebViewJavascriptBridge 初始化...';
+
+            setupWebViewJavascriptBridge(function(bridge) {
+                document.getElementById('status').innerText = '✅ WebViewJavascriptBridge 已初始化';
 
                 try {
                     bridge.callHandler('getpayload', null, function(response) {
                         if (response && response.token) {
-                            document.getElementById('result').innerText = 'PXPay Token: ' + response.token;
+                            document.getElementById('result').innerText = '✅ PXPay Token: ' + response.token;
                         } else {
-                            document.getElementById('result').innerText = '已呼叫 getpayload，但未收到 token。';
-                            document.getElementById('error').innerText = JSON.stringify(response);
+                            document.getElementById('result').innerText = '⚠️ 已呼叫 getpayload，但未收到 token。';
+                            document.getElementById('error').innerText = '回傳內容：' + JSON.stringify(response);
                         }
                     });
                 } catch (e) {
-                    document.getElementById('result').innerText = '呼叫失敗';
+                    document.getElementById('result').innerText = '❌ 呼叫失敗';
                     document.getElementById('error').innerText = '錯誤訊息: ' + e.message;
                 }
             });
-        });
+        }
     </script>
 </head>
 <body>
-    <h1>PXPay Token 測試</h1>
-    <button id="getTokenBtn">取得 PXPay Token</button>
-    <p id="result">尚未呼叫</p>
+    <h1>PXPay Token 自動測試（除錯版）</h1>
+    <p id="status">⏳ 初始化中...</p>
+    <p id="result"></p>
     <p id="error"></p>
+    <h3>📋 除錯資訊（請複製以下內容回報）</h3>
+    <pre id="debugOutput"></pre>
 </body>
 </html>
