@@ -1,82 +1,25 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <title>WKWebViewJavascriptBridge 測試</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    button { margin: 10px 0; padding: 10px 20px; font-size: 16px; }
-    #payloadResult, #errorMessage, #bridgeStatus {
-      background: #f0f0f0;
-      padding: 10px;
-      white-space: pre-wrap;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    #errorMessage { color: red; }
-    #bridgeStatus { color: green; }
-  </style>
-  <script>
-    function setupWKWebViewJavascriptBridge(callback) {
-      if (window.WKWebViewJavascriptBridge) {
-        return callback(window.WKWebViewJavascriptBridge);
-      }
-      if (window.WKWVJBCallbacks) {
-        return window.WKWVJBCallbacks.push(callback);
-      }
-      window.WKWVJBCallbacks = [callback];
-      window.webkit?.messageHandlers?.iOS_Native_InjectJavascript?.postMessage(null);
-    }
+function setupWKWebViewJavascriptBridge(callback) {
+  if (window.WKWebViewJavascriptBridge) {
+    return callback(window.WKWebViewJavascriptBridge);
+  }
+  if (window.WKWVJBCallbacks) {
+    return window.WKWVJBCallbacks.push(callback);
+  }
+  window.WKWVJBCallbacks = [callback];
+  window.webkit?.messageHandlers?.iOS_Native_InjectJavascript?.postMessage(null);
+}
 
-    window.addEventListener('load', function () {
-      const bridgeStatusEl = document.getElementById('bridgeStatus');
-      const errorMessageEl = document.getElementById('errorMessage');
+setupWKWebViewJavascriptBridge(function (bridge) {
+  // 呼叫 getPayload
+  bridge.callHandler('getPayload', {}, function (response) {
+    console.log('原生回傳的 payload:', response);
+    document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
+  });
 
-      // 檢查是否有 WKWebViewJavascriptBridge
-      if (!window.WKWebViewJavascriptBridge) {
-        errorMessageEl.innerText =
-          '⚠️ 未偵測到 WKWebViewJavascriptBridge，請確認是否在 WKWebView 中執行並已注入橋接。';
-        bridgeStatusEl.innerText = '❌ Bridge 尚未初始化';
-      } else {
-        bridgeStatusEl.innerText = '✅ Bridge 已成功初始化';
-      }
-
-      setupWKWebViewJavascriptBridge(function (bridge) {
-        document.getElementById('getPayloadBtn').addEventListener('click', function () {
-          document.getElementById('payloadResult').innerText = '';
-          errorMessageEl.innerText = '';
-          try {
-            bridge.callHandler('getPayload', {}, function (response) {
-              if (response && typeof response === 'object') {
-                document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
-              } else {
-                throw new Error('回傳格式錯誤');
-              }
-            });
-          } catch (err) {
-            errorMessageEl.innerText = '取得 Payload 失敗：' + err.message;
-          }
-        });
-
-        document.getElementById('closeWebViewBtn').addEventListener('click', function () {
-          try {
-            bridge.callHandler('closeWebView', {}, function () {
-              console.log('WebView 已關閉');
-            });
-          } catch (err) {
-            errorMessageEl.innerText = '關閉 WebView 失敗：' + err.message;
-          }
-        });
-      });
+  // 呼叫 closeWebView
+  document.getElementById('closeWebViewBtn').addEventListener('click', function () {
+    bridge.callHandler('closeWebView', {}, function () {
+      console.log('WebView 已關閉');
     });
-  </script>
-</head>
-<body>
-  <h1>WKWebViewJavascriptBridge 測試頁面</h1>
-  <div id="bridgeStatus"></div>
-  <button id="getPayloadBtn">取得 Payload</button>
-  <div id="payloadResult"></div>
-  <div id="errorMessage"></div>
-  <button id="closeWebViewBtn">關閉 WebView</button>
-</body>
-</html>
+  });
+});
