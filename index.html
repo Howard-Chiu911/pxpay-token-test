@@ -33,25 +33,38 @@
       }, 0);
     }
 
-    setupWebViewJavascriptBridge(function (bridge) {
-      document.getElementById('getPayloadBtn').addEventListener('click', function () {
-        document.getElementById('payloadResult').innerText = '';
-        document.getElementById('errorMessage').innerText = '';
-        bridge.callHandler('getPayload', {}, function (response) {
-            if (response && typeof response === 'object') {
-              document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
-            } else {
-              throw new Error('回傳格式錯誤');
-            }
-          });
-        } catch (err) {
-          document.getElementById('errorMessage').innerText = '取得 Payload 失敗：' + err.message;
-        }
-      });
+    window.addEventListener('load', function () {
+      // 檢查是否有 WebViewJavascriptBridge
+      if (!window.WebViewJavascriptBridge) {
+        document.getElementById('errorMessage').innerText =
+          '⚠️ 未偵測到 WebViewJavascriptBridge，請確認是否在 WKWebView 中執行並已注入橋接。';
+      }
 
-      document.getElementById('closeWebViewBtn').addEventListener('click', function () {
-        bridge.callHandler('closeWebView', {}, function () {
-          console.log('WebView 已關閉');
+      setupWebViewJavascriptBridge(function (bridge) {
+        document.getElementById('getPayloadBtn').addEventListener('click', function () {
+          document.getElementById('payloadResult').innerText = '';
+          document.getElementById('errorMessage').innerText = '';
+          try {
+            bridge.callHandler('getPayload', {}, function (response) {
+              if (response && typeof response === 'object') {
+                document.getElementById('payloadResult').innerText = JSON.stringify(response, null, 2);
+              } else {
+                throw new Error('回傳格式錯誤');
+              }
+            });
+          } catch (err) {
+            document.getElementById('errorMessage').innerText = '取得 Payload 失敗：' + err.message;
+          }
+        });
+
+        document.getElementById('closeWebViewBtn').addEventListener('click', function () {
+          try {
+            bridge.callHandler('closeWebView', {}, function () {
+              console.log('WebView 已關閉');
+            });
+          } catch (err) {
+            document.getElementById('errorMessage').innerText = '關閉 WebView 失敗：' + err.message;
+          }
         });
       });
     });
