@@ -6,7 +6,7 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     button { margin: 10px 0; padding: 10px 20px; font-size: 16px; }
-    #payloadResult, #errorMessage {
+    #payloadResult, #errorMessage, #bridgeStatus {
       background: #f0f0f0;
       padding: 10px;
       white-space: pre-wrap;
@@ -14,6 +14,7 @@
       margin-top: 10px;
     }
     #errorMessage { color: red; }
+    #bridgeStatus { color: green; }
   </style>
   <script>
     function setupWebViewJavascriptBridge(callback) {
@@ -34,16 +35,22 @@
     }
 
     window.addEventListener('load', function () {
+      const bridgeStatusEl = document.getElementById('bridgeStatus');
+      const errorMessageEl = document.getElementById('errorMessage');
+
       // 檢查是否有 WebViewJavascriptBridge
       if (!window.WebViewJavascriptBridge) {
-        document.getElementById('errorMessage').innerText =
+        errorMessageEl.innerText =
           '⚠️ 未偵測到 WebViewJavascriptBridge，請確認是否在 WKWebView 中執行並已注入橋接。';
+        bridgeStatusEl.innerText = '❌ Bridge 尚未初始化';
+      } else {
+        bridgeStatusEl.innerText = '✅ Bridge 已成功初始化';
       }
 
       setupWebViewJavascriptBridge(function (bridge) {
         document.getElementById('getPayloadBtn').addEventListener('click', function () {
           document.getElementById('payloadResult').innerText = '';
-          document.getElementById('errorMessage').innerText = '';
+          errorMessageEl.innerText = '';
           try {
             bridge.callHandler('getPayload', {}, function (response) {
               if (response && typeof response === 'object') {
@@ -53,7 +60,7 @@
               }
             });
           } catch (err) {
-            document.getElementById('errorMessage').innerText = '取得 Payload 失敗：' + err.message;
+            errorMessageEl.innerText = '取得 Payload 失敗：' + err.message;
           }
         });
 
@@ -63,7 +70,7 @@
               console.log('WebView 已關閉');
             });
           } catch (err) {
-            document.getElementById('errorMessage').innerText = '關閉 WebView 失敗：' + err.message;
+            errorMessageEl.innerText = '關閉 WebView 失敗：' + err.message;
           }
         });
       });
@@ -72,6 +79,7 @@
 </head>
 <body>
   <h1>WKWebViewJavascriptBridge 測試頁面</h1>
+  <div id="bridgeStatus"></div>
   <button id="getPayloadBtn">取得 Payload</button>
   <div id="payloadResult"></div>
   <div id="errorMessage"></div>
