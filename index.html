@@ -17,37 +17,31 @@
     #bridgeStatus { color: green; }
   </style>
   <script>
-    function setupWebViewJavascriptBridge(callback) {
-      if (window.WebViewJavascriptBridge) {
-        return callback(WebViewJavascriptBridge);
+    function setupWKWebViewJavascriptBridge(callback) {
+      if (window.WKWebViewJavascriptBridge) {
+        return callback(window.WKWebViewJavascriptBridge);
       }
-      if (window.WVJBCallbacks) {
-        return window.WVJBCallbacks.push(callback);
+      if (window.WKWVJBCallbacks) {
+        return window.WKWVJBCallbacks.push(callback);
       }
-      window.WVJBCallbacks = [callback];
-      var WVJBIframe = document.createElement('iframe');
-      WVJBIframe.style.display = 'none';
-      WVJBIframe.src = 'wvjbscheme://__BRIDGE_LOADED__';
-      document.documentElement.appendChild(WVJBIframe);
-      setTimeout(function () {
-        document.documentElement.removeChild(WVJBIframe);
-      }, 0);
+      window.WKWVJBCallbacks = [callback];
+      window.webkit?.messageHandlers?.iOS_Native_InjectJavascript?.postMessage(null);
     }
 
     window.addEventListener('load', function () {
       const bridgeStatusEl = document.getElementById('bridgeStatus');
       const errorMessageEl = document.getElementById('errorMessage');
 
-      // 檢查是否有 WebViewJavascriptBridge
-      if (!window.WebViewJavascriptBridge) {
+      // 檢查是否有 WKWebViewJavascriptBridge
+      if (!window.WKWebViewJavascriptBridge) {
         errorMessageEl.innerText =
-          '⚠️ 未偵測到 WebViewJavascriptBridge，請確認是否在 WKWebView 中執行並已注入橋接。';
+          '⚠️ 未偵測到 WKWebViewJavascriptBridge，請確認是否在 WKWebView 中執行並已注入橋接。';
         bridgeStatusEl.innerText = '❌ Bridge 尚未初始化';
       } else {
         bridgeStatusEl.innerText = '✅ Bridge 已成功初始化';
       }
 
-      setupWebViewJavascriptBridge(function (bridge) {
+      setupWKWebViewJavascriptBridge(function (bridge) {
         document.getElementById('getPayloadBtn').addEventListener('click', function () {
           document.getElementById('payloadResult').innerText = '';
           errorMessageEl.innerText = '';
