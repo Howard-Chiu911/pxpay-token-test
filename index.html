@@ -4,6 +4,11 @@
 <head>
     <title>PXPay Token 測試頁面</title>
     <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #result { margin-top: 20px; color: green; }
+        #error { margin-top: 10px; color: red; }
+    </style>
     <script type="text/javascript">
         function setupWebViewJavascriptBridge(callback) {
             if (window.WebViewJavascriptBridge) {
@@ -20,10 +25,22 @@
 
         setupWebViewJavascriptBridge(function(bridge) {
             document.getElementById('getTokenBtn').addEventListener('click', function() {
-                bridge.callHandler('getpayload', null, function(response) {
-                    console.log('取得的 PXPay Token:', response.token);
-                    document.getElementById('result').innerText = 'PXPay Token: ' + response.token;
-                });
+                document.getElementById('result').innerText = '正在呼叫 getpayload...';
+                document.getElementById('error').innerText = '';
+
+                try {
+                    bridge.callHandler('getpayload', null, function(response) {
+                        if (response && response.token) {
+                            document.getElementById('result').innerText = 'PXPay Token: ' + response.token;
+                        } else {
+                            document.getElementById('result').innerText = '已呼叫 getpayload，但未收到 token。';
+                            document.getElementById('error').innerText = JSON.stringify(response);
+                        }
+                    });
+                } catch (e) {
+                    document.getElementById('result').innerText = '呼叫失敗';
+                    document.getElementById('error').innerText = '錯誤訊息: ' + e.message;
+                }
             });
         });
     </script>
@@ -31,6 +48,7 @@
 <body>
     <h1>PXPay Token 測試</h1>
     <button id="getTokenBtn">取得 PXPay Token</button>
-    <p id="result">尚未取得 Token</p>
+    <p id="result">尚未呼叫</p>
+    <p id="error"></p>
 </body>
 </html>
